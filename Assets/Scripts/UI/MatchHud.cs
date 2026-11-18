@@ -44,6 +44,8 @@ namespace Moba
 
         void OnGUI()
         {
+            GameInput.FeedGuiEvent(Event.current);
+
             MatchController mc = MatchController.Instance;
             if (mc == null) return;
             EnsureStyles();

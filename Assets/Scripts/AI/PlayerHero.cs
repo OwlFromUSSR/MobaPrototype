@@ -42,7 +42,10 @@ namespace Moba
             if (cam == null) cam = Camera.main;
             if (cam == null) return;
 
-            if (GameInput.RightClickDown) HandleRightClick();
+            if (GameInput.RightClickDown)
+            {
+                HandleRightClick();
+            }
 
             for (int i = 0; i < 3; i++)
                 if (GameInput.AbilityDown(i)) Abilities.TryCast(i, AimPoint());

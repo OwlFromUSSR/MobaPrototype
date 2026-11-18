@@ -5,20 +5,39 @@ using UnityEngine.InputSystem;
 
 namespace Moba
 {
-    /// <summary>
-    /// Единая точка ввода. Работает и с новым Input System, и со старым Input Manager,
-    /// в зависимости от настройки Player Settings → Active Input Handling.
-    /// </summary>
     public static class GameInput
     {
+        // Заполняется из MatchHud.OnGUI: IMGUI знает реальную позицию курсора в Game view.
+        static Vector2 guiPointer;
+        static bool guiPointerValid;
+        static bool guiRightClickPending;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            guiPointerValid = false;
+            guiRightClickPending = false;
+        }
+
+        public static void FeedGuiEvent(Event e)
+        {
+            guiPointer = new Vector2(e.mousePosition.x, Screen.height - e.mousePosition.y);
+            guiPointerValid = true;
+            if (e.type == EventType.MouseDown && e.button == 1) guiRightClickPending = true;
+        }
+
         public static Vector2 PointerPosition
         {
             get
             {
+                if (guiPointerValid) return guiPointer;
 #if ENABLE_INPUT_SYSTEM
-                return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-#else
+                if (Mouse.current != null) return Mouse.current.position.ReadValue();
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
                 return Input.mousePosition;
+#else
+                return Vector2.zero;
 #endif
             }
         }
@@ -27,11 +46,15 @@ namespace Moba
         {
             get
             {
+                bool down = guiRightClickPending;
+                guiRightClickPending = false;
 #if ENABLE_INPUT_SYSTEM
-                return Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
-#else
-                return Input.GetMouseButtonDown(1);
+                if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) down = true;
 #endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+                if (Input.GetMouseButtonDown(1)) down = true;
+#endif
+                return down;
             }
         }
 
